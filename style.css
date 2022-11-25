@@ -1,0 +1,51 @@
+body {
+    background-color: #4d4d4d;
+}
+* {
+	margin: 0;
+	padding: 0;
+}
+
+h1 {
+    color: white;
+	text-align: center;  
+    background-color: #262626;
+	padding: 10px;
+	top: 0;
+}
+
+a:link, a:visited {
+	color: white;
+	padding: 15px 25px;
+	text-align: center;
+	text-decoration: none;
+	display: block;
+	margin:auto;
+}
+
+a:hover, a:active {
+	background-color: #757575;
+}
+
+#randomColor {
+	color: white;
+	background-color: transparent;
+	border: none;
+	text-align: center;
+	text-decoration: none;
+	cursor: pointer;
+	display: block;
+	width: 10%;
+	margin: auto;
+	margin-top: 200px;
+	font-size: 30px;
+}
+
+#Hex {
+	color: white;
+	margin: auto;
+	text-align: center;
+    width: 50%;
+	font-size: 100px;
+	margin-top: 50px;
+}

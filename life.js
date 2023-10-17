@@ -2,7 +2,7 @@ let grid;
 let next;
 let cols;
 let rows;
-let resolution = 10;
+let resolution = 5;
 
 function setup()
 {
@@ -29,7 +29,7 @@ function draw()
     next = make2DArray(cols, rows);
 
     //Check if mouse is pressed
-    if (mouseISPressed)
+    if (mouseIsPressed)
     {
         drawing();
     }

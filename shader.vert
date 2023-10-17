@@ -15,6 +15,7 @@ precision mediump float;
 // It automatically gets the position of every vertex on your canvas
 
 attribute vec3 aPosition;
+varying vec2 vTexCoord;
 
 // We always must do at least one thing in the vertex shader:
 // tell the pixel where on the screen it lives:
@@ -29,6 +30,7 @@ void main() {
   // try commenting this line out to see what happens
   positionVec4.xy = positionVec4.xy * 2.0 - 1.0;
 
+  vTexCoord = aPosition.xy;
   // Send the vertex information on to the fragment shader
   // this is done automatically, as long as you put it into the built in shader function “gl_Position”
   gl_Position = positionVec4;

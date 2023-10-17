@@ -17,6 +17,8 @@ function draw() {
   shader(theShader);
 
   // rect gives us some geometry on the screen
+  theShader.setUniform("u_time", Math.sin(millis() / 1000.0));
+  theShader.setV
   rect(0,0,width,height);
   
   // print out the framerate

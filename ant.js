@@ -1,7 +1,7 @@
 let x;
 let y;
 let dir = 3;
-let resolution = 5;
+let resolution = 10;
 let fr = 600;
 
 function setup()

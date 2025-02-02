@@ -1,113 +1,43 @@
-let grid;
-let next;
-let cols;
-let rows;
-let resolution = 5;
+// a shader variable
+let theShader;
 
-function setup()
-{
-    background(0);
-    cols = int(screen.width / resolution);
-    rows = int(screen.height / resolution - 260 / resolution);
-    createCanvas(cols * resolution, rows * resolution);
-    grid = make2DArray(cols, rows);
-    for (let i = 0; i < cols; i++)
-    {
-        for (let j = 0; j < cols; j++)
-        {
-            fill(0);
-            noStroke(0);
-            rect(i * resolution, j * resolution, resolution, resolution);
-            grid[i][j] = floor(random(2));
-        }
-    }
-    stroke(0);
+function preload(){
+  // load the shader
+  theShader = loadShader('shader.vert', 'shader.frag');
 }
 
-function draw()
-{
-    next = make2DArray(cols, rows);
+function setup() {
+  // shaders require WEBGL mode to work
+  createCanvas(windowWidth, windowHeight, WEBGL);
 
-    //Check if mouse is pressed
-    if (mouseIsPressed)
-    {
-        drawing();
+  tex1 = createGraphics(w, h, WEBGL);
+  
+  // Initialize the textures with random data
+  tex1.background(0);
+  tex1.fill(255);
+  for (let x = 0; x < w; x += cellSize) {
+    for (let y = 0; y < h; y += cellSize) {
+      if (random(1) > 0.5) {
+        tex1.rect(x, y, cellSize, cellSize);
+      }
     }
-    else
-    {
-        // Compute next based on grid
-        for (let i = 0; i < cols; i++)
-        {
-            for (let j = 0; j < cols; j++)
-            {
-                let state = grid[i][j];
-
-                // Count live neighbours
-                let neighbors = countNeighbors(grid, i, j);
-
-                if (state == 0 && neighbors == 3)
-                {
-                    fill(255);
-                    rect(i * resolution, j * resolution, resolution-1, resolution-1);
-                    next[i][j] = 1;
-                } 
-                else if (state == 1 && (neighbors < 2 || neighbors > 3))
-                {
-                    fill(0);
-                    rect(i * resolution, j * resolution, resolution-1, resolution-1);
-                    next[i][j] = 0;
-                }
-                else
-                {
-                    next[i][j] = state;
-                }
-            }
-        }
-        grid = next;
-    }
-
+  }
+  noStroke();
 }
 
-function make2DArray(cols, rows)
-{
-    let arr = new Array(cols);
-    for (let i = 0; i < arr.length; i++)
-    {
-        arr[i] = new Array(rows);
+function draw() {
+  // shader() sets the active shader with our shader
+  shader(theShader);
 
-    }
-    return arr;
+  // rect gives us some geometry on the screen
+  theShader.setUniform("u_time", Math.sin(millis() / 1000.0));
+  theShader.setUniform("u_tex", tex1);
+  rect(0,0,width,height);
+  
+  // print out the framerate
+  //  print(frameRate());
 }
 
-function countNeighbors(grid, x, y)
-{
-    let sum = 0;
-    for (let i = -1; i < 2; i++)
-    {
-        for (let j = -1; j < 2; j++)
-        {
-            let col = (x + i + cols) % cols;
-            let row = (y+ j + rows) % rows;
-            sum += grid[col][row]
-        }
-    }
-
-    sum -= grid[x][y];
-    return sum;
-}
-
-
-
-function drawing()
-{
-    if(mouseIsPressed)
-    {
-        let posX = mouseX;
-        let posY = mouseY;
-        let row = int(mouseX / resolution);
-        let column = int(mouseY / resolution);
-        grid[row][column] = 1;
-        fill(255);
-        rect(row * resolution, column * resolution, resolution-1, resolution-1);
-    }
+function windowResized(){
+  resizeCanvas(windowWidth, windowHeight);
 }

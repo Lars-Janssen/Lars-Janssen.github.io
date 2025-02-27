@@ -14,18 +14,59 @@ h1 {
 	top: 0;
 }
 
-a:link, a:visited {
-	color: white;
-	padding: 15px 25px;
-	text-align: center;
-	text-decoration: none;
-	display: block;
-	margin:auto;
+h2 {
+    color: white;
+	text-align: center;  
+    background-color: #262626;
+	padding: 20px;
+	margin-left: 20%;
+	margin-right: 20%;
 }
 
-a:hover, a:active {
-	background-color: #757575;
+div
+{
+	background-color: #262626;
+	margin-left: 20%;
+	margin-right: 20%;
 }
+
+p 
+{
+    color: white;
+	text-align: center;  
+    background-color: #262626;
+	padding: 10px;
+	margin-left: 20%;
+	margin-right: 20%;
+	top: 0;
+}
+
+/* Default styles for standalone links */
+a:link, a:visited {
+    color: white;
+    padding: 15px 25px;
+    text-align: center;
+    text-decoration: none;
+    display: block; /* Standalone links remain block elements */
+    margin: auto;
+}
+
+/* Specific override for links inside <p> */
+p a:link, p a:visited {
+    color: #1E90FF; /* DodgerBlue for paragraph links */
+    text-decoration: none;
+    display: inline; /* Ensure inline display */
+    padding: 0; /* Remove block-level padding */
+    margin: 0;
+}
+
+/* Hover effect for links inside <p> */
+p a:hover {
+    color: #FFD700; /* Gold when hovered */
+    text-decoration: underline;
+}
+
+
 
 #randomColor {
 	color: white;

@@ -83,9 +83,9 @@ def update_map(color_column):
     return create_figure(color_column)
 
 
-server = app.server  # Required for deployment
+server = app.server  # Expose the WSGI app
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080)
+    app.run(debug=True)
 
 

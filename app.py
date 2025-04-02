@@ -63,6 +63,7 @@ def update_scatter(selected_party):
         showlegend=False,
         dragmode="select"  # Enable box/lasso selection
     )
+    scatter_fig.update_traces(showscale=False)
     return scatter_fig
 
 

@@ -118,6 +118,7 @@ def update_map(selected_party, selected_data):
 
     return map_fig
 
+
 server = app.server  # Expose the WSGI app
 
 # Run the Dash app

@@ -3,47 +3,49 @@ import plotly.express as px
 import geopandas as gpd
 import pandas as pd
 
-# Initialize Dash app
-app = Dash()
 
 stemmen_pivot = pd.read_csv("stemmen_pivot.csv")
 gemeente_2023 = gpd.read_file("gemeente_2023.geojson")
+
+# Initialize Dash app
+app = Dash(__name__)
 
 # Convert GeoDataFrame to GeoJSON format
 geojson_data = gemeente_2023.set_index("statcode").__geo_interface__
 
 # List of all columns except for LijstNaam, RegioCode, Regio, x, y
-party_columns = [col for col in stemmen_pivot.columns if col not in
-                 ['LijstNaam', 'RegioCode', 'Regio', 'x', 'y']]
+party_columns = [col for col in stemmen_pivot.columns
+                 if col not in ['LijstNaam', 'RegioCode', 'Regio', 'x', 'y']]
 
-# Layout
+# Layout: Left side for parties list, right side for graphs
 app.layout = html.Div([
     html.Div([
-        dcc.Dropdown(
-            id='party-dropdown',
+        html.H4("Parties"),
+        dcc.RadioItems(
+            id='party-list',
             options=[{'label': party, 'value': party} for party
                      in party_columns],
-            value=party_columns[0],  # Default to the first party
-            style={'width': '50%', 'margin-bottom': '10px'}
+            value=party_columns[0],
+            labelStyle={'display': 'block', 'margin-bottom': '5px'}
         )
-    ], style={'textAlign': 'center'}),
+    ], style={'width': '20%',
+              'display': 'inline-block',
+              'verticalAlign': 'top',
+              'padding': '10px'}),
 
     html.Div([
-        # Scatter plot on the left
-        dcc.Graph(id='scatter_plot', style={'flex': '1'}),
-        # Map on the right
-        dcc.Graph(id='election_map', style={'flex': '1'})
-    ], style={'display': 'flex',
-              'flex-direction': 'row',
-              'justify-content': 'center',
-              'gap': '10px'})
+        dcc.Graph(id='scatter_plot', style={'width': '49%',
+                                            'display': 'inline-block'}),
+        dcc.Graph(id='election_map', style={'width': '49%',
+                                            'display': 'inline-block'})
+    ], style={'width': '75%', 'display': 'inline-block', 'padding': '10px'})
 ])
 
 
-# Callback to update the scatter plot when the party changes
+# Callback to update the scatter plot when the party selection changes
 @app.callback(
     Output('scatter_plot', 'figure'),
-    Input('party-dropdown', 'value')
+    Input('party-list', 'value')
 )
 def update_scatter(selected_party):
     scatter_fig = px.scatter(
@@ -68,7 +70,7 @@ def update_scatter(selected_party):
 # and scatter plot selection
 @app.callback(
     Output('election_map', 'figure'),
-    [Input('party-dropdown', 'value'),
+    [Input('party-list', 'value'),
      Input('scatter_plot', 'selectedData')]
 )
 def update_map(selected_party, selected_data):
@@ -93,7 +95,6 @@ def update_map(selected_party, selected_data):
         hover_name="Regio",
         hover_data={"Regio": False, selected_party: True, "RegioCode": False}
     )
-
     map_fig.update_geos(
         fitbounds="geojson",
         visible=True,
@@ -101,7 +102,6 @@ def update_map(selected_party, selected_data):
         showland=True,
         landcolor="white"
     )
-
     map_fig.update_layout(
         geo=dict(
             center=dict(lat=52.3784, lon=4.9009),
@@ -119,7 +119,7 @@ def update_map(selected_party, selected_data):
     return map_fig
 
 
-server = app.server  # Expose the WSGI app
+server = app.server
 
 # Run the Dash app
 if __name__ == '__main__':

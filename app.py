@@ -7,7 +7,7 @@ import pandas as pd
 app = Dash()
 
 stemmen_pivot = pd.read_csv("stemmen_pivot.csv")
-gemeente_2023 = gpd.read_file("raw_data/gemeente_2023.geojson")
+gemeente_2023 = gpd.read_file("gemeente_2023.geojson")
 
 # Convert GeoDataFrame to GeoJSON format
 geojson_data = gemeente_2023.set_index("statcode").__geo_interface__

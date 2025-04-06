@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Game Location Map</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <style>
+    body {
+      background: #222;
+      color: #eee;
+      font-family: sans-serif;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+    }
+    /* Header and footer styling */
+    #header, #footer {
+      margin-bottom: 10px;
+    }
+    /* Container for map and fullscreen button */
+    #map-container {
+      position: relative;
+      margin: 0 auto;
+      width: 80%;
+      max-width: 800px;
+      border: 2px solid #555;
+      /* Ensure that when not full screen, map-container shrinks nicely */
+      height: auto;
+    }
+    /* Map styling: smaller than full viewport by default */
+    #map {
+      height: 600px;
+      background: black;
+    }
+    /* Fullscreen button styling */
+    #fullscreen-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 1100;
+      padding: 8px 12px;
+      background: rgba(0, 0, 0, 0.7);
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    /* Map search styling */
+    #search-container {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      background: black;
+      padding: 5px;
+      border-radius: 5px;
+    }
+    #search {
+      width: 200px;
+      padding: 5px;
+    }
+    #suggestions {
+      position: absolute;
+      background: white;
+      width: 200px;
+      border: 1px solid #ccc;
+      border-top: none;
+      display: none;
+      max-height: 150px;
+      overflow-y: auto;
+    }
+    /* Ensure suggestions text is dark */
+    .suggestion {
+      padding: 5px;
+      cursor: pointer;
+      color: black;
+    }
+    .suggestion:hover {
+      background: #eee;
+    }
+    /* Fullscreen styles: make the map container fill the screen */
+    #map-container:fullscreen {
+      width: 100%;
+      height: 100%;
+      max-width: 100%;
+      border: none;
+    }
+    #map-container:fullscreen #map {
+      height: 100%;
+    }
+    /* For browsers using vendor-prefixed full screen selectors */
+    #map-container:-webkit-full-screen {
+      width: 100%;
+      height: 100%;
+      max-width: 100%;
+      border: none;
+    }
+    #map-container:-webkit-full-screen #map {
+      height: 100%;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="header">
+    <h1>Welcome to the Game Location Map</h1>
+    <p>Use the search box to locate your favorite games on the map.</p>
+  </div>
+
+  <div id="map-container">
+    <button id="fullscreen-btn">Full Screen</button>
+    <div id="search-container">
+      <input type="text" id="search" placeholder="Search for a game..." autocomplete="off" />
+      <div id="suggestions"></div>
+    </div>
+    <div id="map"></div>
+  </div>
+
+  <div id="footer">
+    <p>Map data provided by Leaflet and our custom configuration.</p>
+  </div>
+
+  <script>
+    // Toggle full screen mode on the map container
+    const fullscreenBtn = document.getElementById("fullscreen-btn");
+    const mapContainer = document.getElementById("map-container");
+    fullscreenBtn.addEventListener("click", () => {
+      if (!document.fullscreenElement) {
+        mapContainer.requestFullscreen().catch(err => {
+          console.error(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+        });
+        fullscreenBtn.textContent = "Exit Full Screen";
+      } else {
+        document.exitFullscreen();
+        fullscreenBtn.textContent = "Full Screen";
+      }
+    });
+
+    // Load tile configuration from tile_config.json.
+    fetch('tile_config.json')
+      .then(response => response.json())
+      .then(config => {
+        const {
+          paddedWidth,       // e.g. 135680
+          paddedHeight,      // e.g. 67584
+          tileSize,          // e.g. 512
+          maxZoom,           // e.g. 9
+          min_x,
+          min_y,
+          margin,
+          displayWidth,      // e.g. 512 (new key)
+          displayHeight      // e.g. 512 (new key)
+        } = config;
+
+        // Our normalized (display) world is 0–512 in both directions.
+        const worldBounds = [[-displayHeight, 0], [displayHeight, displayWidth * 2]];
+
+        // Define a custom CRS that flips the y axis.
+        // This makes Leaflet compute tile indices using TMS numbering.
+        const myCRS = L.extend({}, L.CRS.Simple, {
+          transformation: new L.Transformation(1, 0, -1, displayHeight)
+        });
+
+        const map = L.map('map', {
+          crs: myCRS,
+          center: [displayHeight / 2, displayWidth / 2],
+          zoom: 0,
+          minZoom: 0,
+          maxZoom: maxZoom,
+          maxBounds: worldBounds,
+          maxBoundsViscosity: 1.0
+        });
+
+        // Use tms:true so that the tile layer uses the inverted y coordinates.
+        L.tileLayer('tiles/{z}/{x}/{y}.jpg', {
+          tileSize: tileSize,
+          noWrap: true,
+          bounds: worldBounds,
+          minZoom: 0,
+          maxZoom: maxZoom,
+          tms: true
+        }).addTo(map);
+
+        map.fitBounds(worldBounds);
+
+        // --- Load and Normalize Game Locations ---
+        const games = [];
+        // Append a timestamp to force a fresh fetch each time
+        fetch("data/final_locations.csv?timestamp=" + Date.now())
+          .then(response => response.text())
+          .then(csv => {
+            csv.split("\n").slice(1).forEach(row => {
+              if (!row.trim()) return;
+              const cols = row.split(",");
+              if (cols.length < 10) return;
+              const title = cols[1].trim().toLowerCase();
+              const x = parseFloat(cols[8].trim());
+              const y = parseFloat(cols[9].trim());
+              if (!isNaN(x) && !isNaN(y)) {
+                // Compute global coordinates on the padded canvas.
+                const global_x = x - min_x + margin + 601/2;
+                const global_y = y - min_y + margin + 353/2;
+                // Normalize to the display space (0–displayWidth, 0–displayHeight)
+                const norm_x = global_x / displayWidth;
+                const norm_y = displayHeight - global_y / displayHeight;
+                const game = { title, latlng: [norm_y, norm_x] };  // [lat, lng] order
+                games.push(game);
+              }
+            });
+          });
+
+        function updateSuggestions(query) {
+          const suggestionsBox = document.getElementById("suggestions");
+          suggestionsBox.innerHTML = "";
+          if (!query) {
+            suggestionsBox.style.display = "none";
+            return;
+          }
+          const matches = games.filter(game => game.title.includes(query));
+          if (!matches.length) {
+            suggestionsBox.style.display = "none";
+            return;
+          }
+          matches.forEach(game => {
+            const div = document.createElement("div");
+            div.className = "suggestion";
+            div.textContent = game.title;
+            div.onclick = () => {
+              document.getElementById("search").value = game.title;
+              goToGame(game);
+            };
+            suggestionsBox.appendChild(div);
+          });
+          suggestionsBox.style.display = "block";
+        }
+
+        function goToGame(game) {
+          console.log(`Going to game: ${game.title}, Coordinates:`, game.latlng);
+          map.setView(game.latlng, map.getMaxZoom(), { animate: true });
+          document.getElementById("suggestions").style.display = "none";
+        }
+
+        document.getElementById("search").addEventListener("input", function() {
+          const query = this.value.toLowerCase();
+          updateSuggestions(query);
+          const exactMatch = games.find(game => game.title === query);
+          if (exactMatch) goToGame(exactMatch);
+        });
+
+      })
+      .catch(err => console.error('Error loading tile configuration:', err));
+  </script>
+
+</body>
+</html>

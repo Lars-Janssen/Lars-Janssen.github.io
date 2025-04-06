@@ -3,7 +3,6 @@ import plotly.express as px
 import geopandas as gpd
 import pandas as pd
 
-
 stemmen_pivot = pd.read_csv("stemmen_pivot.csv")
 gemeente_2023 = gpd.read_file("gemeente_2023.geojson")
 
@@ -17,28 +16,65 @@ geojson_data = gemeente_2023.set_index("statcode").__geo_interface__
 party_columns = [col for col in stemmen_pivot.columns
                  if col not in ['LijstNaam', 'RegioCode', 'Regio', 'x', 'y']]
 
-# Layout: Left side for parties list, right side for graphs
+# Layout: Flex container with graphs on the left and party list on the right
 app.layout = html.Div([
+    # Dashboard container with a border and fixed height
     html.Div([
-        html.H4("Parties"),
-        dcc.RadioItems(
-            id='party-list',
-            options=[{'label': party, 'value': party} for party
-                     in party_columns],
-            value=party_columns[0],
-            labelStyle={'display': 'block', 'margin-bottom': '5px'}
-        )
-    ], style={'width': '20%',
-              'display': 'inline-block',
-              'verticalAlign': 'top',
-              'padding': '10px'}),
+        # Party list container (on the right) with fixed height and scrollable overflow
+        html.Div([
+            html.H4("Partijen"),
+            dcc.RadioItems(
+                id='party-list',
+                options=[{'label': party, 'value': party} for party in party_columns],
+                value=party_columns[0],
+                labelStyle={'display': 'block', 'margin-bottom': '5px'}
+            )
+        ], style={
+            'width': '20%',
+            'padding': '10px',
+            'overflowY': 'scroll'
+        }),
+        # Graphs container
+        html.Div([
+            dcc.Graph(id='scatter_plot', style={'width': '49%', 'display': 'inline-block'}),
+            dcc.Graph(id='election_map', style={'width': '49%', 'display': 'inline-block'})
+        ], style={
+            'flex': '1',
+            'padding': '10px'
+        })
+    ], style={
+        'display': 'flex',
+        'height': '700px',
+        'border': '10px solid black',  # Adjust border thickness and color as needed
+        'margin-bottom': '20px'
+    }),
 
+    # Explanation text below the dashboard
     html.Div([
-        dcc.Graph(id='scatter_plot', style={'width': '49%',
-                                            'display': 'inline-block'}),
-        dcc.Graph(id='election_map', style={'width': '49%',
-                                            'display': 'inline-block'})
-    ], style={'width': '75%', 'display': 'inline-block', 'padding': '10px'})
+        html.P(
+            "Dit dashboard visualiseert de uitslag van de Tweede Kamerverkiezingen op het gebied van gemeenten. "
+            "Links kunt u een partij kiezen waarvan u de uitslag wilt bekijken."
+        ),
+        html.P(
+            "De grafiek in het midden vergt wat uitleg. In de onderstaande tabel ziet u de uitslag van de gemeente Amsterdam "
+            "in percentages van de totale hoeveelheid stemmen. Dit geeft de gemeente Amsterdam een coördinaat in 26 dimensies, "
+            "aangezien er 26 partijen waren deze verkiezing. Om dit in een grafiek te laten zien gebruiken we het TSNE algoritme. "
+            "Dit perst de coördinaten van 26D naar 2D en probeert te zorgen dat coördinaten die dicht bij elkaar staan dicht bij elkaar blijven. "
+            "Deze grafiek is vooral interessant om te bekijken voor partijen waarvan de aanhang geconcentreerd is, zoals bijvoorbeeld de SGP, ChristenUnie, "
+            "Volt, Nieuw Sociaal Contract, of BIJ1. Ook bij de VVD zijn bijvoorbeeld de rijkste gemeenten van Nederland goed te herkennen."
+        ),
+        html.P(
+            "Op de kaart aan de rechterkant is vervolgens te zien welk percentage van de stemmen de partij in alle gemeenten heeft gekregen. "
+            "Let hierbij wel op dat de schaal aan de rechterkant varieert, omdat anders de verschillen voor kleine partijen niet te zien zou zijn. "
+            "U kunt gemeenten selecteren in de grafiek in het midden, waarna de kaart aan de rechterkant alleen de geselecteerde gemeenten laat zien. "
+            "Als u de bovenste gemeenten selecteert zult u de Bijbelgordel zien en de onderste gemeenten komen overeen met Twente."
+        )
+    ], style={
+        'width': '75%',
+        'margin': 'auto',
+        'padding': '20px',
+        'textAlign': 'center'
+    })
 ])
 
 
@@ -59,28 +95,27 @@ def update_scatter(selected_party):
     scatter_fig.update_layout(
         width=700,
         height=700,
-        xaxis=dict(scaleanchor="y"),
+        xaxis=dict(visible=False),  # Hide x-axis
+        yaxis=dict(visible=False),  # Hide y-axis
         showlegend=False,
-        dragmode="select"  # Enable box/lasso selection
+        dragmode="select",  # Enable box/lasso selection
     )
-    #scatter_fig.update_traces(showscale=False)
+    # Remove the colorbar from the scatter plot
+    scatter_fig.update(layout_coloraxis_showscale=False)
     return scatter_fig
 
 
-# Callback to update the map based on party selection
-# and scatter plot selection
+# Callback to update the map based on party selection and scatter plot selection
 @app.callback(
     Output('election_map', 'figure'),
     [Input('party-list', 'value'),
      Input('scatter_plot', 'selectedData')]
 )
 def update_map(selected_party, selected_data):
-    # Determine the selected regions from the scatter plot selection
-    # (using hover text, which is 'Regio')
+    # Determine the selected regions from the scatter plot selection (using hover text, which is 'Regio')
     selected_regions = []
     if selected_data and 'points' in selected_data:
-        selected_regions = [point['hovertext'] for point
-                            in selected_data['points']]
+        selected_regions = [point['hovertext'] for point in selected_data['points']]
 
     # Filter the data only if there is an active selection
     filtered_data = stemmen_pivot if not selected_regions else \
@@ -116,7 +151,8 @@ def update_map(selected_party, selected_data):
         width=700,
         height=700
     )
-
+    # Remove the colorbar title (name above the scale)
+    map_fig.update_coloraxes(colorbar_title="")
     return map_fig
 
 

@@ -132,22 +132,24 @@
         "A visual book recommender"</a>, made by Nathan Rooy. Please see his website for more details on the process. <br>
         I decided to adapt this concept to video games, using the Steam best sellers
         list to get the necessary reviews and Steams icons for the images. <br>
+      </p>
 
-        I only used the reviews of users with more than 5 reviews, and only
-        video games that had at least 100 reviews from these users. I then used
-        <a href="https://en.wikipedia.org/wiki/Pointwise_mutual_information">Pointwise mutual information</a>
-        to define how similar two games are, but unlike Nathan, I used
-        the <a href="https://en.wikipedia.org/wiki/Pointwise_mutual_information#PMIk_family">PMI-k family</a>
-        with k=2. This is because PMI is biased towards games that share only a small amount of reviews
-        (for example, there is one reviewer who reviewed both and rated them both positively).
-        By squaring the combined probability, this removes some of that bias.
-        Then I defined two games to be attracted when their PMI is more than -10, and
-        repelled otherwise. <br>
-        Afterwards, I used a <a href="https://en.wikipedia.org/wiki/Siamese_neural_network">Siamese Neural Network</a>
-        to create a 64D map of video games. After using the <a href="https://en.wikipedia.org/wiki/T-distributed_stochastic_neighbor_embedding">t-SNE</a>
-        algorithm to create a 2D map. The map results then from removing the overlap of images,
-        and is displayed using <a href="https://leafletjs.com/">Leaflet</a> after creating
-        image tiles for different zoom levels.
+      <p>
+        Since Nathan gave no code and was sometimes vague in his technical
+        explanation, I have had to reverse engineer a lot of things. (Not complaining,
+        because I learned a lot in the process) Also, his reviews,
+        which were from goodreads, are quite different from my steam reviews,
+        since on goodreads you give stars and on steam only a thumbs up or down.
+        So his definition of liking a book (giving it 5 stars), is not really
+        analogous to my definition of liking a game (giving it a thumbs up).
+      </p>
+
+      <p>
+        I got my games and reviews from the steam bestseller list, and only
+        used reviews from users with at least 5 reviews, as well as only games
+        that got at least 100 reviews from these users. In the end this map has
+        6120 games in it.
+
       </p>
       <p>
         I have tried to remove NSFW games using the store tags, though this unfortunately has also removed

@@ -44,7 +44,7 @@ app.layout = html.Div([
         })
     ], style={
         'display': 'flex',
-        'height': '700px',
+        'height': '750px',
         'border': '10px solid black',  # Adjust border thickness and color as needed
         'margin-bottom': '20px'
     }),

@@ -5,6 +5,7 @@ import pandas as pd
 
 stemmen_pivot = pd.read_csv("stemmen_pivot.csv")
 gemeente_2023 = gpd.read_file("gemeente_2023.geojson")
+c = gpd.read_file("cartogram.geojson")
 
 from dash import Dash, dcc, html, Input, Output
 import plotly.express as px
